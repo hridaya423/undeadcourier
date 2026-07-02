@@ -1,0 +1,44 @@
+# Unity generated folders
+/Library/
+/Temp/
+/Obj/
+/obj/
+/Build/
+/Builds/
+/Logs/
+/UserSettings/
+/MemoryCaptures/
+
+# Unity generated project files
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+sysinfo.txt
+
+# IDE/editor
+/.vs/
+/.vscode/
+.DS_Store
+*.swp
+*.tmp
+
+# Crash/build output
+crashlytics-build.properties
+*.apk
+*.aab
+*.ipa
+*.app
+*.exe
+*.dmg
+
+# Keep Unity package lock committed
+!Packages/packages-lock.json
