@@ -27,7 +27,7 @@ public class TempleInteraction : MonoBehaviour
     private void Start()
     {
         
-        if (GlobalReferences.Instance != null)
+        if (GlobalReferences.Instance != null && GlobalReferences.Instance.player != null)
         {
             player = GlobalReferences.Instance.player.transform;
         }
@@ -45,7 +45,7 @@ public class TempleInteraction : MonoBehaviour
         
         if (pathToTemple == null)
         {
-            pathToTemple = FindFirstObjectByType<PathToTemple>();
+            pathToTemple = FindAnyObjectByType<PathToTemple>();
         }
     }
 

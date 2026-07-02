@@ -14,11 +14,13 @@ public class BossZombieAttackState : StateMachineBehaviour
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        player = playerObject != null ? playerObject.transform : null;
 
         
         agent = animator.GetComponent<NavMeshAgent>();
         bossComponent = animator.GetComponent<BossZombie>();
+        if (player == null || agent == null) return;
 
         
         agent.isStopped = true;
@@ -27,6 +29,8 @@ public class BossZombieAttackState : StateMachineBehaviour
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         
+        if (player == null || agent == null) return;
+
         if (SoundManager.Instance != null && !SoundManager.Instance.zombieChannel.isPlaying)
         {
             SoundManager.Instance.zombieChannel.PlayOneShot(SoundManager.Instance.zombieAttacking);
@@ -96,6 +100,9 @@ public class BossZombieAttackState : StateMachineBehaviour
         }
 
         
-        agent.isStopped = false;
+        if (agent != null)
+        {
+            agent.isStopped = false;
+        }
     }
 }

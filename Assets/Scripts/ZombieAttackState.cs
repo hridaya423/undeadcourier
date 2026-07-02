@@ -11,12 +11,15 @@ public class ZombieAttackState : StateMachineBehaviour
 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        player = playerObject != null ? playerObject.transform : null;
         agent = animator.GetComponent<NavMeshAgent>();
     }
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        if (SoundManager.Instance.zombieChannel.isPlaying == false)
+        if (player == null || agent == null) return;
+
+        if (SoundManager.Instance != null && SoundManager.Instance.zombieChannel.isPlaying == false)
         {
             SoundManager.Instance.zombieChannel.PlayOneShot(SoundManager.Instance.zombieAttacking);
         }
@@ -43,7 +46,10 @@ public class ZombieAttackState : StateMachineBehaviour
 
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        SoundManager.Instance.zombieChannel.Stop();
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.zombieChannel.Stop();
+        }
     }
 }
 

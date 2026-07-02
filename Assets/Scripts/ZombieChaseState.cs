@@ -13,14 +13,18 @@ public class ZombieChaseState : StateMachineBehaviour
 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        player = playerObject != null ? playerObject.transform : null;
         agent = animator.GetComponent<NavMeshAgent>();
+        if (player == null || agent == null) return;
 
         agent.speed = chaseSpeed;
     }
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        if (SoundManager.Instance.zombieChannel.isPlaying == false)
+        if (player == null || agent == null) return;
+
+        if (SoundManager.Instance != null && SoundManager.Instance.zombieChannel.isPlaying == false)
         {
             SoundManager.Instance.zombieChannel.PlayOneShot(SoundManager.Instance.zombieChasing);
         }
@@ -42,9 +46,15 @@ public class ZombieChaseState : StateMachineBehaviour
     }
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        agent.SetDestination(agent.transform.position);
+        if (agent != null)
+        {
+            agent.SetDestination(agent.transform.position);
+        }
 
-        SoundManager.Instance.zombieChannel.Stop();
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.zombieChannel.Stop();
+        }
     }
 }
 

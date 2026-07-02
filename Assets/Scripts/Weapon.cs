@@ -82,7 +82,11 @@ public class    Weapon : MonoBehaviour
             }
 
 
-            GetComponent<Outline>().enabled = false;
+            var outline = GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
 
             if (bulletsLeft == 0 && isShooting)
             {
@@ -137,9 +141,14 @@ public class    Weapon : MonoBehaviour
     private void FireWeapon()
     {
 
+        if (bulletsLeft <= 0) return;
+
         bulletsLeft--;
 
-        muzzleEffect.GetComponent<ParticleSystem>().Play();
+        if (muzzleEffect != null && muzzleEffect.TryGetComponent(out ParticleSystem muzzleParticles))
+        {
+            muzzleParticles.Play();
+        }
         if (isADS)
         {
             animator.SetTrigger("ADS_RECOIL");
@@ -158,14 +167,22 @@ public class    Weapon : MonoBehaviour
         readyToShoot = false;
 
         Vector3 shootingDirection = CalculateDirectionAndSpread().normalized;
+        if (bulletPrefab == null || bulletSpawn == null) return;
+
         GameObject bullet = Instantiate(bulletPrefab, bulletSpawn.position, bulletSpawn.rotation);
 
         Bullet bul = bullet.GetComponent<Bullet>();
-        bul.bulletDamage = weaponDamage;
+        if (bul != null)
+        {
+            bul.bulletDamage = weaponDamage;
+        }
 
         bullet.transform.forward = shootingDirection;
 
-        bullet.GetComponent<Rigidbody>().AddForce(shootingDirection * bulletSpeed, ForceMode.Impulse);
+        if (bullet.TryGetComponent(out Rigidbody bulletBody))
+        {
+            bulletBody.AddForce(shootingDirection * bulletSpeed, ForceMode.Impulse);
+        }
 
         StartCoroutine(DestroyBulletAfterTime(bullet, bulletPrefabLifetime));
 
@@ -178,7 +195,10 @@ public class    Weapon : MonoBehaviour
         if (currentshootingMode == ShootingMode.Burst)
         {
             currentBurst--;
-            Invoke("FireWeapon", shootingDelay);
+            if (currentBurst > 0 && bulletsLeft > 0)
+            {
+                Invoke("FireWeapon", shootingDelay);
+            }
         }
     }
 
@@ -212,6 +232,11 @@ public class    Weapon : MonoBehaviour
 
     private Vector3 CalculateDirectionAndSpread()
     {
+        if (Camera.main == null || bulletSpawn == null)
+        {
+            return transform.forward;
+        }
+
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
         Vector3 targetPoint;

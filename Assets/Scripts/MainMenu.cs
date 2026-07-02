@@ -18,9 +18,9 @@ public class MainMenu : MonoBehaviour
     void Start()
     {
         Cursor.lockState = CursorLockMode.None;
-        mainmenusource.Play();
-        int highScore = SaveLoadManager.Instance.LoadHighScore();
-        highScoreUI.text = $"Most waves survived: " + highScore;
+        if (mainmenusource != null) mainmenusource.Play();
+        int highScore = SaveLoadManager.Instance != null ? SaveLoadManager.Instance.LoadHighScore() : 0;
+        if (highScoreUI != null) highScoreUI.text = $"Most waves survived: " + highScore;
 
         
         if (fadePanel != null)
@@ -56,7 +56,7 @@ public class MainMenu : MonoBehaviour
         }
 
         
-        mainmenusource.Stop();
+        if (mainmenusource != null) mainmenusource.Stop();
 
         
         SceneManager.LoadScene(newGameScene);

@@ -103,9 +103,9 @@ public class PathToTemple : MonoBehaviour
     private void Start()
     {
         
-        if (GlobalReferences.Instance == null)
+        if (GlobalReferences.Instance == null || GlobalReferences.Instance.player == null)
         {
-            Debug.LogError("GlobalReferences not found!");
+            Debug.LogError("GlobalReferences player not found!");
             enabled = false;
             return;
         }

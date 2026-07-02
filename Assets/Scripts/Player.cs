@@ -16,13 +16,16 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
-        HPText.text = $"{HP}";
+        if (HPText != null)
+        {
+            HPText.text = $"{HP}";
+        }
     }
 
     private void OnEnable()
     {
         
-        var scientists = FindObjectsByType<ScientistNPC>(FindObjectsSortMode.None);
+        var scientists = FindObjectsByType<ScientistNPC>();
         foreach (var scientist in scientists)
         {
             scientist.OnWorldSaved += SetInvulnerable;
@@ -32,7 +35,7 @@ public class Player : MonoBehaviour
     private void OnDisable()
     {
         
-        var scientists = FindObjectsByType<ScientistNPC>(FindObjectsSortMode.None);
+        var scientists = FindObjectsByType<ScientistNPC>();
         foreach (var scientist in scientists)
         {
             scientist.OnWorldSaved -= SetInvulnerable;
@@ -52,38 +55,54 @@ public class Player : MonoBehaviour
         HP -= damageAmount;
         if (HP <= 0)
         {
-            PlayerDead();
             isDead = true;
+            PlayerDead();
         }
         else
         {
-            StartCoroutine(BloodyScreenEffect());
-            SoundManager.Instance.playerChannel.PlayOneShot(SoundManager.Instance.playerHurt);
-            HPText.text = $"{HP}";
+            if (bloodyScreen != null)
+            {
+                StartCoroutine(BloodyScreenEffect());
+            }
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.playerChannel.PlayOneShot(SoundManager.Instance.playerHurt);
+            }
+            if (HPText != null)
+            {
+                HPText.text = $"{HP}";
+            }
         }
     }
 
     private void PlayerDead()
     {
-        GetComponent<MouseMovement>().enabled = false;
-        GetComponent<PlayerMovement>().enabled = false;
-        SoundManager.Instance.playerChannel.PlayOneShot(SoundManager.Instance.playerDeath);
-        SoundManager.Instance.playerChannel.clip = SoundManager.Instance.gameOversfx;
-        SoundManager.Instance.playerChannel.PlayDelayed(2f);
-        GetComponentInChildren<Animator>().enabled = true;
-        HPText.gameObject.SetActive(false);
-        GetComponent<ScreenFader>().StartFade();
+        if (TryGetComponent(out MouseMovement mouseMovement)) mouseMovement.enabled = false;
+        if (TryGetComponent(out PlayerMovement playerMovement)) playerMovement.enabled = false;
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playerChannel.PlayOneShot(SoundManager.Instance.playerDeath);
+            SoundManager.Instance.playerChannel.clip = SoundManager.Instance.gameOversfx;
+            SoundManager.Instance.playerChannel.PlayDelayed(2f);
+        }
+        Animator playerAnimator = GetComponentInChildren<Animator>();
+        if (playerAnimator != null) playerAnimator.enabled = true;
+        if (HPText != null) HPText.gameObject.SetActive(false);
+        if (TryGetComponent(out ScreenFader screenFader)) screenFader.StartFade();
         StartCoroutine(ShowGameOverText());
     }
 
     private IEnumerator ShowGameOverText()
     {
         yield return new WaitForSeconds(1f);
-        gameOverText.gameObject.SetActive(true);
-        int waveSurvived = GlobalReferences.Instance.waveNumber;
-        int zombiesKilled = GlobalReferences.Instance.zombiesKilled;
+        if (gameOverText != null) gameOverText.gameObject.SetActive(true);
+        int waveSurvived = GlobalReferences.Instance != null ? GlobalReferences.Instance.waveNumber : 1;
+        int zombiesKilled = GlobalReferences.Instance != null ? GlobalReferences.Instance.zombiesKilled : 0;
         
-        SaveLoadManager.Instance.SaveScore(waveSurvived - 1, zombiesKilled);
+        if (SaveLoadManager.Instance != null)
+        {
+            SaveLoadManager.Instance.SaveScore(waveSurvived - 1, zombiesKilled);
+        }
         StartCoroutine(ReturnToMainMenu());
     }
 
@@ -95,11 +114,14 @@ public class Player : MonoBehaviour
 
     private IEnumerator BloodyScreenEffect()
     {
+        if (bloodyScreen == null) yield break;
+
         if (bloodyScreen.activeInHierarchy == false)
         {
             bloodyScreen.SetActive(true);
         }
         var image = bloodyScreen.GetComponentInChildren<Image>();
+        if (image == null) yield break;
         
         Color startColor = image.color;
         startColor.a = 1f;
@@ -128,9 +150,9 @@ public class Player : MonoBehaviour
     {
         if (other.gameObject.CompareTag("ZombieHand"))
         {
-            if (!isDead && !isInvulnerable)
+            if (!isDead && !isInvulnerable && other.gameObject.TryGetComponent(out ZombieHand zombieHand))
             {
-                TakeDamage(other.gameObject.GetComponent<ZombieHand>().damage);
+                TakeDamage(zombieHand.damage);
             }
         }
     }

@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -45,13 +44,18 @@ public class WeaponManager : MonoBehaviour
 
     private void Start()
     {
-        activeWeaponSlot = weaponSlots[0];
+        if (weaponSlots != null && weaponSlots.Count > 0)
+        {
+            activeWeaponSlot = weaponSlots[0];
+        }
         equippedLethalType = Throwable.ThrowableType.None;
         equippedTacticalType = Throwable.ThrowableType.None;
     }
 
     private void Update()
     {
+        if (weaponSlots == null || weaponSlots.Count == 0 || activeWeaponSlot == null) return;
+
         foreach (GameObject weaponSlot in weaponSlots)
         {
             if (weaponSlot == activeWeaponSlot)
@@ -114,10 +118,13 @@ public class WeaponManager : MonoBehaviour
     private void AddWeaponIntoActiveSlot(GameObject weapon)
     {
 
+        if (weapon == null || activeWeaponSlot == null) return;
+
         DropCurrentWeapon(weapon);
         weapon.transform.SetParent(activeWeaponSlot.transform, false);
 
         Weapon eweapon = weapon.GetComponent<Weapon>();
+        if (eweapon == null) return;
 
         weapon.transform.localPosition = new Vector3(eweapon.spawnPosition.x, eweapon.spawnPosition.y, eweapon.spawnPosition.z);
         weapon.transform.localRotation = Quaternion.Euler(eweapon.spawnRotation.x, eweapon.spawnRotation.y, eweapon.spawnRotation.z);
@@ -129,6 +136,8 @@ public class WeaponManager : MonoBehaviour
 
     private void DropCurrentWeapon(GameObject weapon)
     {
+        if (activeWeaponSlot == null) return;
+
         if (activeWeaponSlot.transform.childCount > 0)
         {
             var weaponToDrop = activeWeaponSlot.transform.GetChild(0).gameObject;
@@ -146,7 +155,12 @@ public class WeaponManager : MonoBehaviour
 
     public void SwitchActiveSlot(int slotNumber)
     {
-        if (activeWeaponSlot.transform.childCount > 0)
+        if (weaponSlots == null || slotNumber < 0 || slotNumber >= weaponSlots.Count || weaponSlots[slotNumber] == null)
+        {
+            return;
+        }
+
+        if (activeWeaponSlot != null && activeWeaponSlot.transform.childCount > 0)
         {
             Weapon currentWeapon = activeWeaponSlot.transform.GetChild(0).GetComponent<Weapon>();
             currentWeapon.isActiveWeapon = false;

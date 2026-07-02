@@ -16,24 +16,31 @@ public class ZombiePatrollingState : StateMachineBehaviour
     List<Transform> waypointsList = new List<Transform>();
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        player = playerObject != null ? playerObject.transform : null;
         navAgent = animator.GetComponent<NavMeshAgent>();
+        if (player == null || navAgent == null) return;
 
         navAgent.speed = patrolSpeed;
         timer = 0;
+        waypointsList.Clear();
 
         GameObject waypointCluster = GameObject.FindGameObjectWithTag("Waypoints");
+        if (waypointCluster == null) return;
         foreach (Transform t in waypointCluster.transform)
         {
             waypointsList.Add(t);
         }
+        if (waypointsList.Count == 0) return;
         Vector3 nextPosition = waypointsList[Random.Range(0, waypointsList.Count)].position;
         navAgent.SetDestination(nextPosition);
     }
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
 
-        if (SoundManager.Instance.zombieChannel.isPlaying == false)
+        if (player == null || navAgent == null || waypointsList.Count == 0) return;
+
+        if (SoundManager.Instance != null && SoundManager.Instance.zombieChannel.isPlaying == false)
         {
             SoundManager.Instance.zombieChannel.PlayOneShot(SoundManager.Instance.zombieWalking);
             SoundManager.Instance.zombieChannel.PlayDelayed(1f);
@@ -50,15 +57,21 @@ public class ZombiePatrollingState : StateMachineBehaviour
         }
 
         float distanceFromPlayer = Vector3.Distance(player.position, animator.transform.position);
-        if (distanceFromPlayer >     detectionArea)
+        if (distanceFromPlayer < detectionArea)
         {
             animator.SetBool("isChasing", true);
         }
     }
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        navAgent.SetDestination(navAgent.transform.position);
-        SoundManager.Instance.zombieChannel.Stop();
+        if (navAgent != null)
+        {
+            navAgent.SetDestination(navAgent.transform.position);
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.zombieChannel.Stop();
+        }
     }
 }
 

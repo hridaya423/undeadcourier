@@ -27,6 +27,8 @@ public class InteractionManager : MonoBehaviour
         Flashlight currentFlashlight = null;
         Throwable currentThrowable = null;
 
+        if (Camera.main == null) return;
+
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit))
@@ -39,8 +41,8 @@ public class InteractionManager : MonoBehaviour
             {
                 currentWeapon = weaponComponent;
                 foundInteractable = true;
-                currentWeapon.GetComponent<Outline>().enabled = true;
-                if (Input.GetKeyDown(KeyCode.E))
+                SetOutline(currentWeapon, true);
+                if (Input.GetKeyDown(KeyCode.E) && WeaponManager.Instance != null)
                 {
                     WeaponManager.Instance.PickupWeapon(currentWeapon.gameObject);
                 }
@@ -52,8 +54,8 @@ public class InteractionManager : MonoBehaviour
             {
                 currentAmmoBox = ammoComponent;
                 foundInteractable = true;
-                currentAmmoBox.GetComponent<Outline>().enabled = true;
-                if (Input.GetKeyDown(KeyCode.E))
+                SetOutline(currentAmmoBox, true);
+                if (Input.GetKeyDown(KeyCode.E) && WeaponManager.Instance != null)
                 {
                     WeaponManager.Instance.PickupAmmo(currentAmmoBox);
                     Destroy(currentAmmoBox.gameObject);
@@ -66,8 +68,8 @@ public class InteractionManager : MonoBehaviour
             {
                 currentThrowable = throwableComponent;
                 foundInteractable = true;
-                currentThrowable.GetComponent<Outline>().enabled = true;
-                if (Input.GetKeyDown(KeyCode.E))
+                SetOutline(currentThrowable, true);
+                if (Input.GetKeyDown(KeyCode.E) && WeaponManager.Instance != null)
                 {
                     WeaponManager.Instance.PickupThrowable(currentThrowable);
                 }
@@ -79,7 +81,7 @@ public class InteractionManager : MonoBehaviour
             {
                 currentFlashlight = flashlightComponent;
                 foundInteractable = true;
-                currentFlashlight.GetComponent<Outline>().enabled = true;
+                SetOutline(currentFlashlight, true);
                 if (Input.GetKeyDown(KeyCode.E))
                 {
                     currentFlashlight.PickUp();
@@ -92,19 +94,19 @@ public class InteractionManager : MonoBehaviour
         {
             if (hoveredWeapon)
             {
-                hoveredWeapon.GetComponent<Outline>().enabled = false;
+                SetOutline(hoveredWeapon, false);
             }
             if (hoveredAmmoBox)
             {
-                hoveredAmmoBox.GetComponent<Outline>().enabled = false;
+                SetOutline(hoveredAmmoBox, false);
             }
             if (hoveredThrowable)
             {
-                hoveredThrowable.GetComponent<Outline>().enabled = false;
+                SetOutline(hoveredThrowable, false);
             }
             if (hoveredFlashlight)
             {
-                hoveredFlashlight.GetComponent<Outline>().enabled = false;
+                SetOutline(hoveredFlashlight, false);
             }
         }
 
@@ -113,5 +115,13 @@ public class InteractionManager : MonoBehaviour
         hoveredAmmoBox = currentAmmoBox;
         hoveredThrowable = currentThrowable;
         hoveredFlashlight = currentFlashlight;
+    }
+
+    private void SetOutline(Component target, bool enabled)
+    {
+        if (target != null && target.TryGetComponent(out Outline outline))
+        {
+            outline.enabled = enabled;
+        }
     }
 }

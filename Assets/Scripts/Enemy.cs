@@ -29,7 +29,7 @@ public class Enemy : MonoBehaviour
                 isDead = true;
                 GlobalReferences.Instance.IncrementZombiesKilled();
 
-                ZombieSpawnController spawnController = FindFirstObjectByType<ZombieSpawnController>();
+                ZombieSpawnController spawnController = FindAnyObjectByType<ZombieSpawnController>();
                 if (spawnController != null)
                 {
                     spawnController.OnEnemyDeath(this);

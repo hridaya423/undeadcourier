@@ -18,11 +18,13 @@ public class BossZombieChaseState : StateMachineBehaviour
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        player = playerObject != null ? playerObject.transform : null;
 
         
         agent = animator.GetComponent<NavMeshAgent>();
         bossComponent = animator.GetComponent<BossZombie>();
+        if (player == null || agent == null) return;
 
         
         agent.speed = animator.GetBool("isEnraged") ? enragedChaseSpeed : chaseSpeed;
@@ -35,6 +37,8 @@ public class BossZombieChaseState : StateMachineBehaviour
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         
+        if (player == null || agent == null) return;
+
         if (Time.time >= nextRoarTime)
         {
             PlayChaseSound(animator);
@@ -103,7 +107,10 @@ public class BossZombieChaseState : StateMachineBehaviour
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         
-        agent.SetDestination(agent.transform.position);
+        if (agent != null)
+        {
+            agent.SetDestination(agent.transform.position);
+        }
 
         
         if (SoundManager.Instance != null)

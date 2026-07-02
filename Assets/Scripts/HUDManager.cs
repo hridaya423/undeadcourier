@@ -43,40 +43,43 @@ public class HUDManager : MonoBehaviour
 
     private void Update()
     {
+        if (WeaponManager.Instance == null || WeaponManager.Instance.activeWeaponSlot == null) return;
+
         Weapon activeWeapon = WeaponManager.Instance.activeWeaponSlot.GetComponentInChildren<Weapon>();
-        Weapon unActiveWeapon = GetUnActiveWeaponSlot().GetComponentInChildren<Weapon>();
+        GameObject unActiveSlot = GetUnActiveWeaponSlot();
+        Weapon unActiveWeapon = unActiveSlot != null ? unActiveSlot.GetComponentInChildren<Weapon>() : null;
 
         if (activeWeapon)
         {
-            magazineAmmoUI.text = $"{activeWeapon.bulletsLeft/activeWeapon.bulletsPerBurst}";
-            totalAmmoUI.text = WeaponManager.Instance.CheckAmmoLeftFor(activeWeapon.thisWeaponModel).ToString();
+            if (magazineAmmoUI != null) magazineAmmoUI.text = $"{activeWeapon.bulletsLeft}";
+            if (totalAmmoUI != null) totalAmmoUI.text = WeaponManager.Instance.CheckAmmoLeftFor(activeWeapon.thisWeaponModel).ToString();
 
             Weapon.WeaponModel model = activeWeapon.thisWeaponModel;
-            ammoTypeUI.sprite = GetAmmoSprite(model);
+            if (ammoTypeUI != null) ammoTypeUI.sprite = GetAmmoSprite(model);
 
-            activeWeaponUI.sprite = GetWeaponSprite(model);
+            if (activeWeaponUI != null) activeWeaponUI.sprite = GetWeaponSprite(model);
 
-            if (unActiveWeapon)
+            if (unActiveWeapon && unActiveWeaponUI != null)
             {
                 unActiveWeaponUI.sprite = GetWeaponSprite(unActiveWeapon.thisWeaponModel);
             }
         }
         else
         {
-            magazineAmmoUI.text = "";
-            totalAmmoUI.text = "";
+            if (magazineAmmoUI != null) magazineAmmoUI.text = "";
+            if (totalAmmoUI != null) totalAmmoUI.text = "";
             
-            ammoTypeUI.sprite = emptySlot;
-            activeWeaponUI.sprite = emptySlot;
-            unActiveWeaponUI.sprite = emptySlot;
+            if (ammoTypeUI != null) ammoTypeUI.sprite = emptySlot;
+            if (activeWeaponUI != null) activeWeaponUI.sprite = emptySlot;
+            if (unActiveWeaponUI != null) unActiveWeaponUI.sprite = emptySlot;
         }
 
-        if (WeaponManager.Instance.lethalsCount <= 0)
+        if (WeaponManager.Instance.lethalsCount <= 0 && lethalUI != null)
         {
             lethalUI.sprite = greySlot;
         }
 
-        if (WeaponManager.Instance.tacticalsCount <= 0)
+        if (WeaponManager.Instance.tacticalsCount <= 0 && tacticalUI != null)
         {
             tacticalUI.sprite = greySlot;
         }
@@ -87,11 +90,11 @@ public class HUDManager : MonoBehaviour
         switch (model)
         {
             case Weapon.WeaponModel.M1911:
-                return Resources.Load<GameObject>("M1191_Weapon").GetComponent<SpriteRenderer>().sprite;
+                return LoadSprite("M1191_Weapon");
             case Weapon.WeaponModel.AK74:
-                return Resources.Load<GameObject>("AK74_Weapon").GetComponent<SpriteRenderer>().sprite;
+                return LoadSprite("AK74_Weapon");
             case Weapon.WeaponModel.Uzi:
-                return Resources.Load<GameObject>("Uzi_Weapon").GetComponent<SpriteRenderer>().sprite;
+                return LoadSprite("Uzi_Weapon");
             case Weapon.WeaponModel.Shotgun:
                 return null;
             default:
@@ -104,11 +107,11 @@ public class HUDManager : MonoBehaviour
         switch (model)
         {
             case Weapon.WeaponModel.M1911:
-                return Resources.Load<GameObject>("PistolAmmo").GetComponent<SpriteRenderer>().sprite;
+                return LoadSprite("PistolAmmo");
             case Weapon.WeaponModel.AK74:
-                return Resources.Load<GameObject>("RifleAmmo").GetComponent<SpriteRenderer>().sprite;
+                return LoadSprite("RifleAmmo");
             case Weapon.WeaponModel.Uzi:
-                return Resources.Load<GameObject>("SMGAmmo").GetComponent<SpriteRenderer>().sprite;
+                return LoadSprite("SMGAmmo");
             case Weapon.WeaponModel.Shotgun:
                 return null;
             default:
@@ -118,6 +121,8 @@ public class HUDManager : MonoBehaviour
 
     private GameObject GetUnActiveWeaponSlot()
     {
+        if (WeaponManager.Instance == null || WeaponManager.Instance.weaponSlots == null) return null;
+
         foreach (GameObject weaponSlot in WeaponManager.Instance.weaponSlots)
         {
             if (weaponSlot != WeaponManager.Instance.activeWeaponSlot)
@@ -132,23 +137,31 @@ public class HUDManager : MonoBehaviour
     internal void UpdateThrowables()
     {
 
-        lethalAmountUI.text = WeaponManager.Instance.lethalsCount.ToString();
-        tacticalAmountUI.text = WeaponManager.Instance.tacticalsCount.ToString();
+        if (WeaponManager.Instance == null) return;
+
+        if (lethalAmountUI != null) lethalAmountUI.text = WeaponManager.Instance.lethalsCount.ToString();
+        if (tacticalAmountUI != null) tacticalAmountUI.text = WeaponManager.Instance.tacticalsCount.ToString();
 
 
         switch (WeaponManager.Instance.equippedLethalType)
         {
             case Throwable.ThrowableType.Grenade:
-                lethalUI.sprite = Resources.Load<GameObject>("Grenade").GetComponent<SpriteRenderer>().sprite;
+                if (lethalUI != null) lethalUI.sprite = LoadSprite("Grenade");
                 break;
         }
 
         switch (WeaponManager.Instance.equippedTacticalType)
         {
             case Throwable.ThrowableType.Smoke:
-                tacticalUI.sprite = Resources.Load<GameObject>("Smoke").GetComponent<SpriteRenderer>().sprite;
+                if (tacticalUI != null) tacticalUI.sprite = LoadSprite("Smoke");
                 break;
         }
+    }
+
+    private Sprite LoadSprite(string resourceName)
+    {
+        GameObject prefab = Resources.Load<GameObject>(resourceName);
+        return prefab != null && prefab.TryGetComponent(out SpriteRenderer spriteRenderer) ? spriteRenderer.sprite : emptySlot;
     }
 }
 

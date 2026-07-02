@@ -3,10 +3,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
-
-
-
-
 public class PathToScientist : MonoBehaviour
 {
     [Header("Path Target")]
@@ -102,9 +98,9 @@ public class PathToScientist : MonoBehaviour
     private void Start()
     {
         
-        if (GlobalReferences.Instance == null)
+        if (GlobalReferences.Instance == null || GlobalReferences.Instance.player == null)
         {
-            Debug.LogError("GlobalReferences not found!");
+            Debug.LogError("GlobalReferences player not found!");
             enabled = false;
             return;
         }
@@ -114,7 +110,7 @@ public class PathToScientist : MonoBehaviour
         
         if (scientistTransform == null)
         {
-            _scientistNPC = FindFirstObjectByType<ScientistNPC>();
+            _scientistNPC = FindAnyObjectByType<ScientistNPC>();
             if (_scientistNPC != null)
             {
                 scientistTransform = _scientistNPC.transform;
