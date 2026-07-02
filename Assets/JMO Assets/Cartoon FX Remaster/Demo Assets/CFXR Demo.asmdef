@@ -1,7 +1,8 @@
 {
     "name": "CFXRDemo",
     "references": [
-        "CFXRRuntime"
+        "CFXRRuntime",
+        "Unity.UGUI"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
