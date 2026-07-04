@@ -8,29 +8,34 @@ public class MainMenu : MonoBehaviour
 {
     string newGameScene = "SampleScene";
     public TMP_Text highScoreUI;
-    public AudioSource mainmenusource;
 
     
     public Image fadePanel;
     public float fadeTime = 1.0f;
+    public MenuSequencer sequencer;
     private bool isTransitioning = false;
 
     void Start()
     {
         Cursor.lockState = CursorLockMode.None;
-        if (mainmenusource != null) mainmenusource.Play();
         int highScore = SaveLoadManager.Instance != null ? SaveLoadManager.Instance.LoadHighScore() : 0;
+
+        if (sequencer != null)
+        {
+            sequencer.PlayIntro(highScore);
+            return;
+        }
+
         if (highScoreUI != null) highScoreUI.text = $"Most waves survived: " + highScore;
 
-        
         if (fadePanel != null)
         {
-            
+
             Color startColor = fadePanel.color;
             startColor.a = 1f;
             fadePanel.color = startColor;
 
-            
+
             fadePanel.raycastTarget = false;
 
             StartCoroutine(FadeIn());
@@ -39,26 +44,10 @@ public class MainMenu : MonoBehaviour
 
     public void StartNewGame()
     {
-        if (!isTransitioning)
-        {
-            isTransitioning = true;
-            StartCoroutine(TransitionToNewGame());
-        }
-    }
+        if (isTransitioning) return;
+        isTransitioning = true;
 
-    IEnumerator TransitionToNewGame()
-    {
-        
-        if (fadePanel != null)
-        {
-            fadePanel.raycastTarget = true;
-            yield return StartCoroutine(FadeOut());
-        }
-
-        
-        if (mainmenusource != null) mainmenusource.Stop();
-
-        
+        DitherController.Instance?.DisableForGameplay();
         SceneManager.LoadScene(newGameScene);
     }
 
@@ -75,32 +64,16 @@ public class MainMenu : MonoBehaviour
             yield return null;
         }
 
-        
+
         panelColor.a = 0f;
-        fadePanel.color = panelColor;
-    }
-
-    IEnumerator FadeOut()
-    {
-        float elapsedTime = 0;
-        Color panelColor = fadePanel.color;
-
-        while (elapsedTime < fadeTime)
-        {
-            panelColor.a = Mathf.Lerp(0f, 1f, elapsedTime / fadeTime);
-            fadePanel.color = panelColor;
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-
-        
-        panelColor.a = 1f;
         fadePanel.color = panelColor;
     }
 
     public void ExitApplication()
     {
+#if !UNITY_WEBGL
         Application.Quit();
+#endif
     }
 }
     
