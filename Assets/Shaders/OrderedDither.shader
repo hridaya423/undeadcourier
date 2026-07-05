@@ -100,6 +100,7 @@ Shader "UndeadCourier/OrderedDither"
                 half3 quant = saturate(floor(col.rgb * steps + 0.5 + threshold * _DitherSpread) / steps);
                 float shadowWeight = saturate(1.0 - lum * 2.2);
                 float w = _Intensity * lerp(1.0, shadowWeight, _LumaInfluence);
+                w *= smoothstep(0.0, 0.2, lum);
                 half3 legacyOut = lerp(col.rgb, quant, saturate(w));
 
                 float shapedRaw = saturate((lum - _DuoBlack) / max(_DuoWhite - _DuoBlack, 0.0001));

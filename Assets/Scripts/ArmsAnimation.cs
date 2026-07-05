@@ -132,10 +132,8 @@ public class ArmsAnimation : MonoBehaviour
         
         handTarget.position = grip.position + grip.TransformDirection(positionOffset);
 
-        
-        handTarget.rotation = grip.rotation * Quaternion.Euler(rotationOffset);
 
-        Debug.Log($"Updated hand target to match grip: {grip.name} at position {grip.position}, target position: {handTarget.position}");
+        handTarget.rotation = grip.rotation * Quaternion.Euler(rotationOffset);
     }
 
     private Vector3 GetPositionOffset(Transform weapon)
@@ -166,12 +164,10 @@ public class ArmsAnimation : MonoBehaviour
         {
             if (child.CompareTag("WeaponGrip"))
             {
-                Debug.Log($"Found grip in weapon: {weapon.name}, grip: {child.name} at position {child.position}");
                 return child;
             }
         }
 
-        Debug.LogError($"No grip found in weapon: {weapon.name}");
         return null;
     }
 

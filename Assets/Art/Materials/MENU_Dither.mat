@@ -38,7 +38,7 @@ Material:
     - _Duotone: 0
     - _GrainFloor: 0.05
     - _Intensity: 0
-    - _LumaInfluence: 0
+    - _LumaInfluence: 1
     - _PixelSize: 1
     - _Steps: 6
     m_Colors:

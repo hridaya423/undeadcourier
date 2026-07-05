@@ -1,9 +1,11 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 public static class MenuPreviewCapture
 {
     const string Flag = "MenuPreviewCapture.active";
+    const string ScenePath = "Assets/Scenes/MainMenu.unity";
     static bool shot1, shot2;
 
     [MenuItem("Tools/Undead Courier/Exit Play Mode")]
@@ -15,6 +17,9 @@ public static class MenuPreviewCapture
     [MenuItem("Tools/Undead Courier/Capture Menu Preview")]
     static void Run()
     {
+        if (EditorSceneManager.GetActiveScene().path != ScenePath)
+            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
         SessionState.SetBool(Flag, true);
         shot1 = shot2 = false;
         logBuf.Clear();

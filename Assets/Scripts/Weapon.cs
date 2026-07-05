@@ -65,12 +65,6 @@ public class    Weapon : MonoBehaviour
     {
         if (isActiveWeapon)
         {
-
-            foreach (Transform child in transform)
-            {
-                child.gameObject.layer = LayerMask.NameToLayer("WeaponRender");
-            }
-
             if (Input.GetMouseButtonDown(1))
             {
                 EnterADS();
@@ -79,13 +73,6 @@ public class    Weapon : MonoBehaviour
             if (Input.GetMouseButtonUp(1))
             {
                 ExitADS();
-            }
-
-
-            var outline = GetComponent<Outline>();
-            if (outline != null)
-            {
-                outline.enabled = false;
             }
 
             if (bulletsLeft == 0 && isShooting)
@@ -110,15 +97,30 @@ public class    Weapon : MonoBehaviour
                 currentBurst = bulletsPerBurst;
                 FireWeapon();
             }
-            else
-            {
-                foreach (Transform child in transform)
-                {
-                    child.gameObject.layer = LayerMask.NameToLayer("Default");
-                }
-            }
-           
+        }
+    }
 
+    public void SetRenderLayer(bool weaponRender)
+    {
+        int layer = LayerMask.NameToLayer(weaponRender ? "WeaponRender" : "Default");
+        SetLayerRecursive(transform, layer);
+
+        if (weaponRender)
+        {
+            var outline = GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
+        }
+    }
+
+    private static void SetLayerRecursive(Transform root, int layer)
+    {
+        foreach (Transform child in root)
+        {
+            child.gameObject.layer = layer;
+            SetLayerRecursive(child, layer);
         }
     }
 

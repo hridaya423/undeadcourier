@@ -44,6 +44,16 @@ public class ZombieSpawnController : MonoBehaviour
     private float targetProgressValue = 0f; 
     private float currentProgressValue = 0f; 
 
+    private void OnEnable()
+    {
+        GameEvents.EnemyDied += OnEnemyDeath;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.EnemyDied -= OnEnemyDeath;
+    }
+
     private void Start()
     {
         if (waveProgressBar != null)

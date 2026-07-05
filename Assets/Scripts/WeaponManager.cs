@@ -131,6 +131,7 @@ public class WeaponManager : MonoBehaviour
         
         eweapon.isActiveWeapon = true;
         eweapon.animator.enabled = true;
+        eweapon.SetRenderLayer(true);
 
     }
 
@@ -142,8 +143,10 @@ public class WeaponManager : MonoBehaviour
         {
             var weaponToDrop = activeWeaponSlot.transform.GetChild(0).gameObject;
 
-            weaponToDrop.GetComponent<Weapon>().isActiveWeapon = false;
-            weaponToDrop.GetComponent<Weapon>().enabled = false; 
+            Weapon droppedWeapon = weaponToDrop.GetComponent<Weapon>();
+            droppedWeapon.isActiveWeapon = false;
+            droppedWeapon.SetRenderLayer(false);
+            droppedWeapon.enabled = false;
 
             weaponToDrop.transform.SetParent(weapon.transform.parent);
             weaponToDrop.transform.localPosition = weapon.transform.localPosition;
@@ -164,6 +167,7 @@ public class WeaponManager : MonoBehaviour
         {
             Weapon currentWeapon = activeWeaponSlot.transform.GetChild(0).GetComponent<Weapon>();
             currentWeapon.isActiveWeapon = false;
+            currentWeapon.SetRenderLayer(false);
 
         }
 
@@ -173,6 +177,7 @@ public class WeaponManager : MonoBehaviour
         {
             Weapon newWeapon = activeWeaponSlot.transform.GetChild(0).GetComponent<Weapon>();
             newWeapon.isActiveWeapon = true;
+            newWeapon.SetRenderLayer(true);
         }
     }
 

@@ -28,23 +28,19 @@ public class Enemy : MonoBehaviour
             {
                 isDead = true;
                 GlobalReferences.Instance.IncrementZombiesKilled();
+                GameEvents.RaiseEnemyDied(this);
 
-                ZombieSpawnController spawnController = FindAnyObjectByType<ZombieSpawnController>();
-                if (spawnController != null)
-                {
-                    spawnController.OnEnemyDeath(this);
-                }
 
-                
                 navAgent.enabled = false;
                 GetComponent<CapsuleCollider>().enabled = false;
 
-                
+
                 int randomValue = Random.Range(0, 2);
                 animator.SetTrigger(randomValue == 0 ? "DIE1" : "DIE2");
 
-                
-                SoundManager.Instance.zombieChannel1.PlayOneShot(SoundManager.Instance.zombieDeath);
+
+                if (SoundManager.Instance != null)
+                    SoundManager.Instance.zombieChannel1.PlayOneShot(SoundManager.Instance.zombieDeath);
 
                 StartCoroutine(DespawnAfterDelay(3f));
             }
@@ -52,7 +48,8 @@ public class Enemy : MonoBehaviour
         else
         {
             animator.SetTrigger("DAMAGE");
-            SoundManager.Instance.zombieChannel1.PlayOneShot(SoundManager.Instance.zombieHurt);
+            if (SoundManager.Instance != null)
+                SoundManager.Instance.zombieChannel1.PlayOneShot(SoundManager.Instance.zombieHurt);
         }
     }
 
