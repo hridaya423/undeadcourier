@@ -372,7 +372,8 @@ public static class GameplaySceneBuilder
     {
         EnsureDir("Assets/Art/Materials");
 
-        var skyShader = Shader.Find("Skybox/Panoramic");
+        var hdri = AssetDatabase.LoadAssetAtPath<Texture>(SkyExrPath);
+        var skyShader = Shader.Find(hdri != null && hdri.dimension == TextureDimension.Cube ? "Skybox/Cubemap" : "Skybox/Panoramic");
         Material skyMat = AssetDatabase.LoadAssetAtPath<Material>(SkyMatPath);
         if (skyMat == null)
         {
@@ -384,9 +385,9 @@ public static class GameplaySceneBuilder
             skyMat.shader = skyShader;
         }
 
-        var hdri = AssetDatabase.LoadAssetAtPath<Texture>(SkyExrPath);
         if (hdri == null) Warnings.Add("Missing sky HDRI: " + SkyExrPath);
-        else if (skyMat.HasProperty("_MainTex")) skyMat.SetTexture("_MainTex", hdri);
+        else if (hdri.dimension == TextureDimension.Cube && skyMat.HasProperty("_Tex")) skyMat.SetTexture("_Tex", hdri);
+        else if (hdri.dimension != TextureDimension.Cube && skyMat.HasProperty("_MainTex")) skyMat.SetTexture("_MainTex", hdri);
         if (skyMat.HasProperty("_Exposure")) skyMat.SetFloat("_Exposure", SkyExposure);
         if (skyMat.HasProperty("_Tint")) skyMat.SetColor("_Tint", SkyTint);
         EditorUtility.SetDirty(skyMat);

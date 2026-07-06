@@ -16,7 +16,7 @@ public class ZombieChaseState : StateMachineBehaviour
         GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
         player = playerObject != null ? playerObject.transform : null;
         agent = animator.GetComponent<NavMeshAgent>();
-        if (player == null || agent == null) return;
+        if (player == null || agent == null || !agent.enabled || !agent.isOnNavMesh) return;
 
         agent.speed = chaseSpeed;
     }
@@ -46,7 +46,7 @@ public class ZombieChaseState : StateMachineBehaviour
     }
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        if (agent != null)
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
         {
             agent.SetDestination(agent.transform.position);
         }
