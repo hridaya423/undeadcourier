@@ -279,6 +279,7 @@ public class Weapon : MonoBehaviour
         {
             int headshotDamage = Mathf.RoundToInt(weaponDamage * WeaponConfig.HeadshotMultiplier);
             float bloodLossMl = headHitbox.owner.RegisterBloodHit(headshotDamage, true, thisWeaponModel);
+            headHitbox.owner.RegisterHitContext(hit.point, direction, hit.collider, true);
             headHitbox.owner.TakeDamage(headshotDamage);
 
             SpawnBloodSpray(hit.point, hit.normal, 1.5f);
@@ -290,6 +291,7 @@ public class Weapon : MonoBehaviour
         if (enemy != null)
         {
             float bloodLossMl = enemy.RegisterBloodHit(weaponDamage, false, thisWeaponModel);
+            enemy.RegisterHitContext(hit.point, direction, hit.collider, false);
             enemy.TakeDamage(weaponDamage);
 
             SpawnBloodSpray(hit.point, hit.normal, 1f);

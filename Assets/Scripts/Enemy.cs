@@ -8,6 +8,10 @@ public class Enemy : MonoBehaviour
     private Animator animator;
     private NavMeshAgent navAgent;
     private float bloodLossMl;
+    private Vector3 lastHitPoint;
+    private Vector3 lastHitDirection = Vector3.back;
+    private Collider lastHitCollider;
+    private bool lastHitWasHeadshot;
     internal bool isDead;
 
     private void Start()
@@ -26,7 +30,8 @@ public class Enemy : MonoBehaviour
 
         if (headBone.GetComponent<HeadHitbox>() != null) return;
 
-        SphereCollider headCollider = headBone.gameObject.AddComponent<SphereCollider>();
+        SphereCollider headCollider = headBone.GetComponent<SphereCollider>();
+        if (headCollider == null) headCollider = headBone.gameObject.AddComponent<SphereCollider>();
         headCollider.radius = 0.14f;
         headCollider.isTrigger = false;
         headBone.gameObject.layer = gameObject.layer;
@@ -46,14 +51,20 @@ public class Enemy : MonoBehaviour
             if (!isDead) 
             {
                 isDead = true;
-                GlobalReferences.Instance.IncrementZombiesKilled();
+                GlobalReferences.Instance?.IncrementZombiesKilled();
                 GameEvents.RaiseEnemyDied(this);
 
                 if (navAgent != null) navAgent.enabled = false;
                 if (TryGetComponent(out CapsuleCollider capsule)) capsule.enabled = false;
 
-                int randomValue = Random.Range(0, 2);
-                if (animator != null) animator.SetTrigger(randomValue == 0 ? "DIE1" : "DIE2");
+                ZombieRagdoll ragdoll = GetComponent<ZombieRagdoll>();
+                bool didRagdoll = ragdoll != null && ragdoll.EnableRagdoll(lastHitPoint, lastHitDirection, lastHitWasHeadshot, lastHitCollider);
+
+                if (!didRagdoll)
+                {
+                    int randomValue = Random.Range(0, 2);
+                    if (animator != null) animator.SetTrigger(randomValue == 0 ? "DIE1" : "DIE2");
+                }
 
                 if (SoundManager.Instance != null)
                     SoundManager.Instance.zombieChannel1.PlayOneShot(SoundManager.Instance.zombieDeath);
@@ -97,6 +108,14 @@ public class Enemy : MonoBehaviour
         float loss = baseLoss * damageScale * (headshot ? 1.75f : 1f) * Random.Range(0.8f, 1.25f);
         bloodLossMl = Mathf.Min(5000f, bloodLossMl + loss);
         return loss;
+    }
+
+    public void RegisterHitContext(Vector3 hitPoint, Vector3 hitDirection, Collider hitCollider, bool headshot)
+    {
+        lastHitPoint = hitPoint;
+        lastHitCollider = hitCollider;
+        lastHitWasHeadshot = headshot;
+        if (hitDirection.sqrMagnitude > 0.0001f) lastHitDirection = hitDirection.normalized;
     }
 
     private void SpawnDeathPool()

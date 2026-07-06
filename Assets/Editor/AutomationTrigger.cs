@@ -10,6 +10,8 @@ public static class AutomationTrigger
     const string CombatCaptureTriggerPath = "Logs/trigger_capture_combat.txt";
     const string DecalPreviewTriggerPath = "Logs/trigger_decal_preview.txt";
     const string SetupBloodDecalsTriggerPath = "Logs/trigger_setup_blood_decals.txt";
+    const string SetupRagdollTriggerPath = "Logs/trigger_setup_ragdoll.txt";
+    const string RagdollPreviewTriggerPath = "Logs/trigger_capture_ragdoll.txt";
 
     static AutomationTrigger()
     {
@@ -48,6 +50,16 @@ public static class AutomationTrigger
         {
             File.Delete(SetupBloodDecalsTriggerPath);
             BloodDecalSetup.Setup();
+        }
+        if (File.Exists(RagdollPreviewTriggerPath))
+        {
+            File.Delete(RagdollPreviewTriggerPath);
+            RagdollPreviewCapture.Run();
+        }
+        if (File.Exists(SetupRagdollTriggerPath))
+        {
+            File.Delete(SetupRagdollTriggerPath);
+            ZombieRagdollSetup.Run();
         }
     }
 }
