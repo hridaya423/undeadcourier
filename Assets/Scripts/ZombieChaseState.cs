@@ -50,11 +50,9 @@ public class ZombieChaseState : StateMachineBehaviour
         {
             agent.SetDestination(agent.transform.position);
         }
-
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.zombieChannel.Stop();
         }
     }
 }
-

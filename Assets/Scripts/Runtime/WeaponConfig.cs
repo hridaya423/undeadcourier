@@ -28,7 +28,7 @@ public static class WeaponConfig
             case Weapon.WeaponModel.M1911:
                 return new WeaponData
                 {
-                    damage = 25,
+                    damage = 42,
                     shotDelay = 0.3f,
                     hipSpread = 1.2f,
                     adsSpread = 0.2f,
@@ -45,7 +45,7 @@ public static class WeaponConfig
             case Weapon.WeaponModel.AK74:
                 return new WeaponData
                 {
-                    damage = 22,
+                    damage = 34,
                     shotDelay = 0.15f,
                     hipSpread = 2.5f,
                     adsSpread = 0.6f,
@@ -62,7 +62,7 @@ public static class WeaponConfig
             case Weapon.WeaponModel.Uzi:
                 return new WeaponData
                 {
-                    damage = 15,
+                    damage = 22,
                     shotDelay = 0.1f,
                     hipSpread = 3.5f,
                     adsSpread = 1.2f,
@@ -79,7 +79,7 @@ public static class WeaponConfig
             case Weapon.WeaponModel.Shotgun:
                 return new WeaponData
                 {
-                    damage = 12,
+                    damage = 18,
                     shotDelay = 0.8f,
                     hipSpread = 8f,
                     adsSpread = 4f,

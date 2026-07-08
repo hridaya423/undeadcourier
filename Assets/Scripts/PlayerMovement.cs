@@ -3,6 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
+    public static PlayerMovement Active { get; private set; }
+
     [Header("Movement Parameters")]
     [Tooltip("Basic movement speed")]
     public float moveSpeed = 6f;
@@ -66,6 +68,7 @@ public class PlayerMovement : MonoBehaviour
     private float stamina;
     private float lastSprintTime;
     private bool exhausted;
+    private float nextFootstepTime;
 
     public bool IsGrounded => isGrounded;
     public bool IsMoving => isMoving;
@@ -76,6 +79,18 @@ public class PlayerMovement : MonoBehaviour
     public float HorizontalSpeed01 => Mathf.Clamp01(new Vector3(controller.velocity.x, 0f, controller.velocity.z).magnitude / Mathf.Max(0.01f, moveSpeed * sprintMultiplier));
     public float VerticalVelocity => velocity.y;
     public float LandingStrength => landingStrength;
+    public bool IsExhausted => exhausted;
+
+    void Awake()
+    {
+        Active = this;
+    }
+
+    void OnDisable()
+    {
+        if (Active == this) Active = null;
+        SoundManager.Instance?.SetBreathing(false, 0f);
+    }
 
     void Start()
     {
@@ -130,6 +145,7 @@ public class PlayerMovement : MonoBehaviour
 
         
         UpdateMovementState();
+        UpdateMovementAudio();
         landingStrength = Mathf.MoveTowards(landingStrength, 0f, landingRecovery * Time.deltaTime);
         wasGrounded = isGrounded;
     }
@@ -202,6 +218,8 @@ public class PlayerMovement : MonoBehaviour
             if (!wasGrounded && lastUngroundedVelocity < -landingVelocityThreshold)
             {
                 landingStrength = Mathf.Clamp01(Mathf.Abs(lastUngroundedVelocity) / 20f);
+                SoundManager.Instance?.PlayLanding(transform.position, landingStrength);
+                GameEvents.RaiseNoiseEmitted(transform.position, Mathf.Lerp(12f, 28f, landingStrength));
             }
 
             velocity.y = -2f; 
@@ -213,8 +231,26 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateMovementState()
     {
-        
-        isMoving = controller.velocity.magnitude > 0.1f && isGrounded;
+        Vector3 horizontalVelocity = new Vector3(controller.velocity.x, 0f, controller.velocity.z);
+        isMoving = horizontalVelocity.magnitude > 0.1f;
+    }
+
+    void UpdateMovementAudio()
+    {
+        if (SoundManager.Instance == null) return;
+
+        float healthStress = Player.Active != null ? 1f - Player.Active.Health01 : 0f;
+        float staminaStress = 1f - Stamina01;
+        float breathingIntensity = Mathf.Clamp01(Mathf.Max(IsSprinting ? 0.35f : 0f, staminaStress, healthStress));
+        bool shouldBreathe = IsSprinting || exhausted || Stamina01 < 0.55f || healthStress > 0.25f;
+        SoundManager.Instance.SetBreathing(shouldBreathe, breathingIntensity);
+
+        if (!isMoving) return;
+        float cadence = IsSprinting ? 0.26f : 0.38f;
+        if (Time.time < nextFootstepTime) return;
+        nextFootstepTime = Time.time + cadence;
+        SoundManager.Instance.PlayFootstep(transform.position, IsSprinting);
+        if (IsSprinting) GameEvents.RaiseNoiseEmitted(transform.position, 14f);
     }
 
     

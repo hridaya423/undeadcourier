@@ -7441,7 +7441,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d439679e4119425439927a25d579c369, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HP: 2500
+  HP: 100
   bloodyScreen: {fileID: 1998206334}
   HPText: {fileID: 184184772}
   gameOverText: {fileID: 1413201746}

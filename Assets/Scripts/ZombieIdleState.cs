@@ -29,11 +29,23 @@ public class ZombieIdleState : StateMachineBehaviour
         if (player == null) return;
 
         float distanceFromPlayer = Vector3.Distance(player.position, animator.transform.position);
-        if (distanceFromPlayer < detectionAreaRadius)
+        if (distanceFromPlayer < detectionAreaRadius * PlayerDetectionMultiplier() || HeardRecentNoise(animator.transform.position))
         {
             animator.SetBool("isChasing", true);
         }
     }
 
-}
+    float PlayerDetectionMultiplier()
+    {
+        float multiplier = 1f;
+        if (PlayerFlashlight.Active != null) multiplier *= PlayerFlashlight.Active.IsOn ? 1.35f : 0.65f;
+        if (PlayerMovement.Active != null && PlayerMovement.Active.IsSprinting) multiplier *= 1.2f;
+        return multiplier;
+    }
 
+    bool HeardRecentNoise(Vector3 position)
+    {
+        return Time.time - GameEvents.LastNoiseTime < 1.4f && Vector3.Distance(position, GameEvents.LastNoisePosition) <= GameEvents.LastNoiseRadius;
+    }
+
+}

@@ -93,13 +93,11 @@ public class BossZombieAttackState : StateMachineBehaviour
 
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.zombieChannel.Stop();
         }
 
-        
         if (agent != null)
         {
             agent.isStopped = false;

@@ -1221,9 +1221,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccdfd66a76d34754ba58e47741a11381, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HP: 850
-  bossHP: 850
-  bossDamage: 50
+  HP: 650
+  bossHP: 650
+  bossDamage: 35
   moveSpeed: 4
   enragedMoveSpeed: 6
   attackRange: 3
@@ -1246,7 +1246,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0718c457080d89145b28e73aa5350274, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HP: 850
+  HP: 650
 --- !u!136 &8117670412289652326
 CapsuleCollider:
   m_ObjectHideFlags: 0

@@ -7,12 +7,29 @@ using System;
 
 public class Player : MonoBehaviour
 {
+    public static Player Active { get; private set; }
+
     public int HP = 100;
     public GameObject bloodyScreen;
     public TextMeshProUGUI HPText;
     public GameObject gameOverText;
     public bool isDead;
     private bool isInvulnerable = false;
+    private bool playedLowHealthStinger;
+    private int maxHP;
+
+    public float Health01 => maxHP > 0 ? Mathf.Clamp01((float)HP / maxHP) : 1f;
+
+    void Awake()
+    {
+        Active = this;
+        maxHP = HP;
+    }
+
+    void OnDestroy()
+    {
+        if (Active == this) Active = null;
+    }
 
     private void Start()
     {
@@ -67,6 +84,12 @@ public class Player : MonoBehaviour
             if (SoundManager.Instance != null)
             {
                 SoundManager.Instance.playerChannel.PlayOneShot(SoundManager.Instance.playerHurt);
+                SoundManager.Instance.SetLowHealthHeartbeat(HP <= 45);
+                if (HP <= 45 && !playedLowHealthStinger)
+                {
+                    playedLowHealthStinger = true;
+                    SoundManager.PlayRandom(SoundManager.Instance.playerChannel, SoundManager.Instance.uiStingers, 0.45f, 0.95f, 1.02f);
+                }
             }
             if (HPText != null)
             {
@@ -81,6 +104,7 @@ public class Player : MonoBehaviour
         if (TryGetComponent(out PlayerMovement playerMovement)) playerMovement.enabled = false;
         if (SoundManager.Instance != null)
         {
+            SoundManager.Instance.SetLowHealthHeartbeat(false);
             SoundManager.Instance.playerChannel.PlayOneShot(SoundManager.Instance.playerDeath);
             SoundManager.Instance.playerChannel.clip = SoundManager.Instance.gameOversfx;
             SoundManager.Instance.playerChannel.PlayDelayed(2f);

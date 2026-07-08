@@ -77,7 +77,6 @@ public class BossZombieChaseState : StateMachineBehaviour
     {
         if (SoundManager.Instance != null && !SoundManager.Instance.zombieChannel.isPlaying)
         {
-            
             if (animator.GetBool("isEnraged"))
             {
                 SoundManager.Instance.zombieChannel.PlayOneShot(SoundManager.Instance.bossSpecialAttackSound);
@@ -112,10 +111,10 @@ public class BossZombieChaseState : StateMachineBehaviour
             agent.SetDestination(agent.transform.position);
         }
 
-        
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.zombieChannel.Stop();
         }
+
     }
 }

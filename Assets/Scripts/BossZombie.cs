@@ -6,8 +6,8 @@ using TMPro;
 public class BossZombie : Enemy
 {
     [Header("Boss Settings")]
-    [SerializeField] private int bossHP = 500;
-    [SerializeField] private int bossDamage = 25;
+    [SerializeField] private int bossHP = 650;
+    [SerializeField] private int bossDamage = 35;
     [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private float enragedMoveSpeed = 6f;
     [SerializeField] private float attackRange = 3f;
@@ -26,9 +26,6 @@ public class BossZombie : Enemy
     private bool isSpecialAttacking;
     private bool isEnraged = false;
     private GameObject activeEnrageEffect;
-
-    private float moveSoundCooldown = 0f;
-    private float idleSoundCooldown = 0f;
 
     public static event System.Action OnBossDeath;
 
@@ -126,7 +123,7 @@ public class BossZombie : Enemy
     {
         if (isDead) return;
 
-        int actualDamage = Mathf.Max(1, damageAmount / 2);
+        int actualDamage = damageAmount;
         HP -= actualDamage;
         UpdateHealthUI();
 
