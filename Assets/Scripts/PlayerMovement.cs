@@ -31,17 +31,57 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("How quickly the player decelerates")]
     public float deceleration = 10f;
 
+    [Header("Stamina")]
+    public float maxStamina = 100f;
+    public float sprintStaminaDrain = 22f;
+    public float staminaRegen = 28f;
+    public float staminaRegenDelay = 0.6f;
+    public float exhaustedSprintThreshold = 18f;
+    public float jumpStaminaCost = 12f;
+
+    [Header("Jump Leniency")]
+    [Tooltip("Allows a jump shortly after leaving the ground")]
+    public float coyoteTime = 0.12f;
+    [Tooltip("Buffers jump input shortly before landing")]
+    public float jumpBufferTime = 0.12f;
+
+    [Header("Landing")]
+    [Tooltip("Minimum downward speed to register a landing impact")]
+    public float landingVelocityThreshold = 7f;
+    [Tooltip("How quickly landing strength fades back to zero")]
+    public float landingRecovery = 8f;
+
     
     private CharacterController controller;
     private Vector3 moveDirection;
     private Vector3 velocity;
     private bool isGrounded;
     private bool isMoving;
+    private bool wasGrounded;
+    private float lastGroundedTime;
+    private float jumpPressedTime = float.NegativeInfinity;
+    private float lastUngroundedVelocity;
+    private float landingStrength;
+    private Vector2 moveInput;
+    private float stamina;
+    private float lastSprintTime;
+    private bool exhausted;
+
+    public bool IsGrounded => isGrounded;
+    public bool IsMoving => isMoving;
+    public bool IsSprinting { get; private set; }
+    public Vector2 MoveInput => moveInput;
+    public float Stamina => stamina;
+    public float Stamina01 => maxStamina > 0f ? stamina / maxStamina : 0f;
+    public float HorizontalSpeed01 => Mathf.Clamp01(new Vector3(controller.velocity.x, 0f, controller.velocity.z).magnitude / Mathf.Max(0.01f, moveSpeed * sprintMultiplier));
+    public float VerticalVelocity => velocity.y;
+    public float LandingStrength => landingStrength;
 
     void Start()
     {
         
         controller = GetComponent<CharacterController>();
+        stamina = maxStamina;
 
         
         if (groundCheck == null)
@@ -62,13 +102,18 @@ public class PlayerMovement : MonoBehaviour
         
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
+        moveInput = new Vector2(moveHorizontal, moveVertical);
 
         
         Vector3 desiredMoveDirection = transform.right * moveHorizontal + transform.forward * moveVertical;
         desiredMoveDirection = Vector3.ClampMagnitude(desiredMoveDirection, 1f);
 
         
-        float currentMoveSpeed = Input.GetKey(KeyCode.LeftShift) ? moveSpeed * sprintMultiplier : moveSpeed;
+        bool wantsSprint = Input.GetKey(KeyCode.LeftShift) && moveVertical > 0.1f;
+        if (exhausted && stamina >= exhaustedSprintThreshold) exhausted = false;
+        IsSprinting = wantsSprint && !exhausted && stamina > 0f;
+        UpdateStamina();
+        float currentMoveSpeed = IsSprinting ? moveSpeed * sprintMultiplier : moveSpeed;
 
         
         moveDirection = Vector3.Lerp(moveDirection, desiredMoveDirection * currentMoveSpeed,
@@ -85,20 +130,63 @@ public class PlayerMovement : MonoBehaviour
 
         
         UpdateMovementState();
+        landingStrength = Mathf.MoveTowards(landingStrength, 0f, landingRecovery * Time.deltaTime);
+        wasGrounded = isGrounded;
     }
 
     void HandleJumping()
     {
-        
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        if (Input.GetButtonDown("Jump"))
         {
-            
+            jumpPressedTime = Time.time;
+        }
+
+        bool canUseBufferedJump = Time.time - jumpPressedTime <= jumpBufferTime;
+        bool canUseCoyoteTime = Time.time - lastGroundedTime <= coyoteTime;
+
+        if (canUseBufferedJump && canUseCoyoteTime)
+        {
+            if (stamina < jumpStaminaCost) return;
+
+            stamina = Mathf.Max(0f, stamina - jumpStaminaCost);
+            lastSprintTime = Time.time;
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            jumpPressedTime = float.NegativeInfinity;
+            lastGroundedTime = float.NegativeInfinity;
+        }
+    }
+
+    void UpdateStamina()
+    {
+        if (IsSprinting)
+        {
+            stamina = Mathf.Max(0f, stamina - sprintStaminaDrain * Time.deltaTime);
+            lastSprintTime = Time.time;
+            if (stamina <= 0f)
+            {
+                exhausted = true;
+                IsSprinting = false;
+            }
+            return;
+        }
+
+        if (Time.time - lastSprintTime >= staminaRegenDelay)
+        {
+            stamina = Mathf.Min(maxStamina, stamina + staminaRegen * Time.deltaTime);
         }
     }
 
     void ApplyGravity()
     {
+        if (isGrounded)
+        {
+            lastGroundedTime = Time.time;
+        }
+        else
+        {
+            lastUngroundedVelocity = velocity.y;
+        }
+
         
         velocity.y += gravity * Time.deltaTime;
 
@@ -111,6 +199,11 @@ public class PlayerMovement : MonoBehaviour
         
         if (isGrounded && velocity.y < 0)
         {
+            if (!wasGrounded && lastUngroundedVelocity < -landingVelocityThreshold)
+            {
+                landingStrength = Mathf.Clamp01(Mathf.Abs(lastUngroundedVelocity) / 20f);
+            }
+
             velocity.y = -2f; 
         }
 

@@ -8,6 +8,7 @@ public class CameraRecoil : MonoBehaviour
     public float yawClampMax = 1.5f;
 
     private Vector2 currentKick;
+    private Quaternion lastApplied = Quaternion.identity;
 
     public void Kick(float pitchMin, float pitchMax, float yawMin, float yawMax, float snapSpeed, float recoverSpeed)
     {
@@ -27,7 +28,9 @@ public class CameraRecoil : MonoBehaviour
 
     private void LateUpdate()
     {
+        transform.localRotation *= Quaternion.Inverse(lastApplied);
         currentKick = Vector2.MoveTowards(currentKick, Vector2.zero, recoverSpeed * Time.deltaTime);
-        transform.localRotation = Quaternion.Euler(currentKick.x, currentKick.y, 0f);
+        lastApplied = Quaternion.Euler(currentKick.x, currentKick.y, 0f);
+        transform.localRotation *= lastApplied;
     }
 }

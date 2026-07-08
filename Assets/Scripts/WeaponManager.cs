@@ -6,6 +6,7 @@ using static Weapon;
 public class WeaponManager : MonoBehaviour
 {
     public static WeaponManager Instance { get; set; }
+    public event Action<Weapon> ActiveWeaponChanged;
 
     public List<GameObject> weaponSlots;
 
@@ -47,9 +48,46 @@ public class WeaponManager : MonoBehaviour
         if (weaponSlots != null && weaponSlots.Count > 0)
         {
             activeWeaponSlot = weaponSlots[0];
+            foreach (GameObject slot in weaponSlots)
+            {
+                if (GetWeaponInSlot(slot) != null)
+                {
+                    activeWeaponSlot = slot;
+                    break;
+                }
+            }
+
+            Weapon activeWeapon = ActiveWeapon;
+            if (activeWeapon == null)
+            {
+                foreach (Weapon weapon in FindObjectsByType<Weapon>(FindObjectsInactive.Include))
+                {
+                    if (weapon.thisWeaponModel == WeaponModel.AK74)
+                    {
+                        PickupWeapon(weapon.gameObject);
+                        activeWeapon = ActiveWeapon;
+                        break;
+                    }
+                }
+            }
+
+            if (activeWeapon != null)
+            {
+                activeWeapon.isActiveWeapon = true;
+                activeWeapon.SetRenderLayer(true);
+            }
         }
         equippedLethalType = Throwable.ThrowableType.None;
         equippedTacticalType = Throwable.ThrowableType.None;
+        NotifyActiveWeaponChanged();
+    }
+
+    public Weapon ActiveWeapon
+    {
+        get
+        {
+            return GetWeaponInSlot(activeWeaponSlot);
+        }
     }
 
     private void Update()
@@ -132,6 +170,7 @@ public class WeaponManager : MonoBehaviour
         eweapon.isActiveWeapon = true;
         eweapon.animator.enabled = true;
         eweapon.SetRenderLayer(true);
+        NotifyActiveWeaponChanged();
 
     }
 
@@ -165,9 +204,12 @@ public class WeaponManager : MonoBehaviour
 
         if (activeWeaponSlot != null && activeWeaponSlot.transform.childCount > 0)
         {
-            Weapon currentWeapon = activeWeaponSlot.transform.GetChild(0).GetComponent<Weapon>();
-            currentWeapon.isActiveWeapon = false;
-            currentWeapon.SetRenderLayer(false);
+            Weapon currentWeapon = GetWeaponInSlot(activeWeaponSlot);
+            if (currentWeapon != null)
+            {
+                currentWeapon.isActiveWeapon = false;
+                currentWeapon.SetRenderLayer(false);
+            }
 
         }
 
@@ -175,10 +217,25 @@ public class WeaponManager : MonoBehaviour
 
         if (activeWeaponSlot.transform.childCount > 0)
         {
-            Weapon newWeapon = activeWeaponSlot.transform.GetChild(0).GetComponent<Weapon>();
-            newWeapon.isActiveWeapon = true;
-            newWeapon.SetRenderLayer(true);
+            Weapon newWeapon = GetWeaponInSlot(activeWeaponSlot);
+            if (newWeapon != null)
+            {
+                newWeapon.isActiveWeapon = true;
+                newWeapon.SetRenderLayer(true);
+            }
         }
+
+        NotifyActiveWeaponChanged();
+    }
+
+    private void NotifyActiveWeaponChanged()
+    {
+        ActiveWeaponChanged?.Invoke(ActiveWeapon);
+    }
+
+    static Weapon GetWeaponInSlot(GameObject slot)
+    {
+        return slot != null ? slot.GetComponentInChildren<Weapon>(true) : null;
     }
 
     internal void PickupAmmo(AmmoBox ammo)
@@ -352,4 +409,3 @@ public class WeaponManager : MonoBehaviour
     }
 
 }
-

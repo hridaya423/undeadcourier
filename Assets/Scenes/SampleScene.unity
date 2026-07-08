@@ -7332,6 +7332,7 @@ GameObject:
   - component: {fileID: 313947750}
   - component: {fileID: 313947752}
   - component: {fileID: 313947753}
+  - component: {fileID: 313947754}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -7459,6 +7460,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 372690619}
   fadeDuration: 5
+--- !u!114 &313947754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 313947747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1ec2f6c32c09434894fa313346d7453, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldCameraName: Main Camera
+  weaponCameraName: WeaponRenderCamera
+  weaponSpawnName: WeaponSpawn
+  flashlightSpawnName: FlashlightSpawn
+  armsName: arms
+  reparentFlashlight: 1
+  showAuthoredArms: 0
+  authoredArmsResource: OpenGameArt/FPS_ARMS_RIG_1
 --- !u!1 &315117479
 GameObject:
   m_ObjectHideFlags: 0

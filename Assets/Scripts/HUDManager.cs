@@ -7,6 +7,7 @@ using System;
 
 public class HUDManager : MonoBehaviour
 {
+    static Sprite whiteSprite;
 
     [Header("Ammo")]
     public TextMeshProUGUI magazineAmmoUI;
@@ -28,6 +29,15 @@ public class HUDManager : MonoBehaviour
     public Sprite greySlot;
 
     public GameObject middleDot;
+
+    [Header("Player")]
+    public Image staminaUI;
+    public TextMeshProUGUI staminaTextUI;
+    public Image flashlightBatteryUI;
+    public TextMeshProUGUI flashlightBatteryTextUI;
+
+    PlayerMovement playerMovement;
+    PlayerFlashlight playerFlashlight;
     
     public static HUDManager Instance { get; set; }
     private void Awake()
@@ -41,8 +51,17 @@ public class HUDManager : MonoBehaviour
         Instance = this;
     }
 
+    void Start()
+    {
+        playerMovement = FindAnyObjectByType<PlayerMovement>();
+        playerFlashlight = FindAnyObjectByType<PlayerFlashlight>();
+        EnsurePlayerBars();
+    }
+
     private void Update()
     {
+        UpdatePlayerHUD();
+
         if (WeaponManager.Instance == null || WeaponManager.Instance.activeWeaponSlot == null) return;
 
         Weapon activeWeapon = WeaponManager.Instance.activeWeaponSlot.GetComponentInChildren<Weapon>();
@@ -82,6 +101,21 @@ public class HUDManager : MonoBehaviour
         if (WeaponManager.Instance.tacticalsCount <= 0 && tacticalUI != null)
         {
             tacticalUI.sprite = greySlot;
+        }
+    }
+
+    void UpdatePlayerHUD()
+    {
+        if (playerMovement != null)
+        {
+            if (staminaUI != null) staminaUI.fillAmount = playerMovement.Stamina01;
+            if (staminaTextUI != null) staminaTextUI.text = Mathf.RoundToInt(playerMovement.Stamina).ToString();
+        }
+
+        if (playerFlashlight != null)
+        {
+            if (flashlightBatteryUI != null) flashlightBatteryUI.fillAmount = playerFlashlight.Battery01;
+            if (flashlightBatteryTextUI != null) flashlightBatteryTextUI.text = Mathf.RoundToInt(playerFlashlight.Battery).ToString();
         }
     }
 
@@ -163,5 +197,68 @@ public class HUDManager : MonoBehaviour
         GameObject prefab = Resources.Load<GameObject>(resourceName);
         return prefab != null && prefab.TryGetComponent(out SpriteRenderer spriteRenderer) ? spriteRenderer.sprite : emptySlot;
     }
-}
 
+    void EnsurePlayerBars()
+    {
+        if (staminaUI == null) staminaUI = CreateBar("Stamina", new Vector2(20f, 92f), new Color(0.9f, 0.78f, 0.28f, 0.9f));
+        if (flashlightBatteryUI == null) flashlightBatteryUI = CreateBar("Battery", new Vector2(20f, 66f), new Color(0.3f, 0.72f, 1f, 0.9f));
+    }
+
+    Image CreateBar(string label, Vector2 anchoredPosition, Color fillColor)
+    {
+        Transform parent = GetHudCanvasTransform();
+        Transform existing = parent.Find(label + "Bar");
+        if (existing != null) return existing.GetComponentInChildren<Image>();
+
+        GameObject root = new GameObject(label + "Bar", typeof(RectTransform));
+        root.transform.SetParent(parent, false);
+        root.transform.SetAsLastSibling();
+        RectTransform rect = root.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.zero;
+        rect.pivot = Vector2.zero;
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = new Vector2(140f, 14f);
+
+        Image background = root.AddComponent<Image>();
+        background.sprite = GetWhiteSprite();
+        background.color = new Color(0f, 0f, 0f, 0.55f);
+
+        GameObject fillObject = new GameObject("Fill", typeof(RectTransform));
+        fillObject.transform.SetParent(root.transform, false);
+        RectTransform fillRect = fillObject.GetComponent<RectTransform>();
+        fillRect.anchorMin = Vector2.zero;
+        fillRect.anchorMax = Vector2.one;
+        fillRect.offsetMin = new Vector2(2f, 2f);
+        fillRect.offsetMax = new Vector2(-2f, -2f);
+
+        Image fill = fillObject.AddComponent<Image>();
+        fill.sprite = GetWhiteSprite();
+        fill.color = fillColor;
+        fill.type = Image.Type.Filled;
+        fill.fillMethod = Image.FillMethod.Horizontal;
+        fill.fillOrigin = 0;
+        fill.fillAmount = 1f;
+        return fill;
+    }
+
+    Transform GetHudCanvasTransform()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null) return canvas.transform;
+
+        canvas = FindAnyObjectByType<Canvas>();
+        if (canvas != null) return canvas.transform;
+
+        return transform;
+    }
+
+    static Sprite GetWhiteSprite()
+    {
+        if (whiteSprite == null)
+        {
+            whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f));
+        }
+        return whiteSprite;
+    }
+}

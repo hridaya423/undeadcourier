@@ -4,10 +4,16 @@ using System.Collections.Generic;
 
 public class ArmsAnimation : MonoBehaviour
 {
-    private TwoBoneIKConstraint twoBoneIK;
+    private TwoBoneIKConstraint rightHandIK;
+    private TwoBoneIKConstraint leftHandIK;
+    private RigBuilder rigBuilder;
     private WeaponManager weaponManager;
-    private Transform currentGrip;
-    [SerializeField] private Transform handTarget; 
+    private Weapon currentWeapon;
+    private Transform armsRoot;
+    [SerializeField] private Transform handTarget;
+    [SerializeField] private Transform leftHandTarget;
+    [SerializeField] private float targetFollowSpeed = 18f;
+    [SerializeField] private float ikBlendSpeed = 10f;
 
     
     [System.Serializable]
@@ -31,48 +37,75 @@ public class ArmsAnimation : MonoBehaviour
     [SerializeField] private Vector3 defaultPositionOffset = Vector3.zero;
     [SerializeField] private Vector3 defaultRotationOffset = Vector3.zero;
 
+    [Header("Left Hand")]
+    [SerializeField] private bool createLeftHandIK = true;
+    [SerializeField] private Vector3 defaultLeftHandOffset = new Vector3(-0.03f, -0.01f, 0.14f);
+    [SerializeField] private Vector3 defaultLeftHandRotation = new Vector3(90f, 180f, 0f);
+
     
-    [SerializeField] private bool showDebugVisuals = true;
+    [SerializeField] private bool showDebugVisuals = false;
     [SerializeField] private float debugSphereRadius = 0.02f;
     [SerializeField] private Color targetColor = Color.green;
     [SerializeField] private Color gripColor = Color.red;
+    [SerializeField] private Color leftTargetColor = Color.cyan;
 
     void Start()
     {
-        twoBoneIK = GetComponent<TwoBoneIKConstraint>();
+        rightHandIK = GetComponent<TwoBoneIKConstraint>();
+        rigBuilder = FindAnyObjectByType<RigBuilder>();
         weaponManager = WeaponManager.Instance;
+        GameObject armsObject = GameObject.Find("OpenGameArt_FPS_Arms");
+        armsRoot = armsObject != null ? armsObject.transform : transform.root;
+        EnsureRightHandIK();
+        EnsureRightHandTarget();
+        EnsureLeftHandIK();
 
-        
-        if (handTarget == null && twoBoneIK != null && twoBoneIK.data.target != null)
+        if (rightHandIK != null)
         {
-            handTarget = twoBoneIK.data.target;
+            rightHandIK.weight = 0f;
         }
 
-        
-        if (handTarget == null)
+        if (leftHandIK != null)
         {
-            GameObject targetObj = new GameObject(gameObject.name + "_Target");
-            handTarget = targetObj.transform;
-
-            
-            var data = twoBoneIK.data;
-            data.target = handTarget;
-            twoBoneIK.data = data;
+            leftHandIK.weight = 0f;
         }
-
-        
-        twoBoneIK.weight = 0f;
     }
 
-    void Update()
+    void LateUpdate()
     {
-        bool weaponActive = UpdateWeaponReference();
-        twoBoneIK.weight = Mathf.Lerp(twoBoneIK.weight, weaponActive ? 1f : 0f, Time.deltaTime * 10f);
+        currentWeapon = weaponManager != null ? weaponManager.ActiveWeapon : null;
+        WeaponActionAnimator actionAnimator = currentWeapon != null ? currentWeapon.GetComponent<WeaponActionAnimator>() : null;
+        bool weaponActive = currentWeapon != null && actionAnimator != null;
 
-        
-        if (showDebugVisuals && currentGrip != null && handTarget != null)
+        if (rightHandIK != null)
         {
-            Debug.DrawLine(handTarget.position, currentGrip.position, Color.yellow);
+            rightHandIK.weight = Mathf.Lerp(rightHandIK.weight, weaponActive ? 1f : 0f, Time.deltaTime * ikBlendSpeed);
+        }
+
+        if (leftHandIK != null)
+        {
+            leftHandIK.weight = Mathf.Lerp(leftHandIK.weight, weaponActive ? 1f : 0f, Time.deltaTime * ikBlendSpeed);
+        }
+
+        if (!weaponActive)
+        {
+            return;
+        }
+
+        Transform rightGrip = actionAnimator.RightHandGrip;
+        Transform leftGrip = actionAnimator.LeftHandGrip;
+
+        UpdateTarget(handTarget, rightGrip, GetPositionOffset(currentWeapon.transform), GetRotationOffset(currentWeapon.transform));
+        UpdateTarget(leftHandTarget, leftGrip, defaultLeftHandOffset, defaultLeftHandRotation);
+
+        if (showDebugVisuals && handTarget != null && rightGrip != null)
+        {
+            Debug.DrawLine(handTarget.position, rightGrip.position, Color.yellow);
+        }
+
+        if (showDebugVisuals && leftHandTarget != null && leftGrip != null)
+        {
+            Debug.DrawLine(leftHandTarget.position, leftGrip.position, Color.cyan);
         }
     }
 
@@ -86,54 +119,141 @@ public class ArmsAnimation : MonoBehaviour
                 Gizmos.DrawSphere(handTarget.position, debugSphereRadius);
             }
 
-            if (currentGrip != null)
+            if (leftHandTarget != null)
             {
-                Gizmos.color = gripColor;
-                Gizmos.DrawSphere(currentGrip.position, debugSphereRadius);
+                Gizmos.color = leftTargetColor;
+                Gizmos.DrawSphere(leftHandTarget.position, debugSphereRadius);
             }
         }
     }
 
-    private bool UpdateWeaponReference()
+    private void EnsureRightHandTarget()
     {
-        if (!weaponManager || !weaponManager.activeWeaponSlot || weaponManager.activeWeaponSlot.transform.childCount == 0)
+        if (handTarget == null && rightHandIK != null && rightHandIK.data.target != null)
         {
-            currentGrip = null;
-            return false;
+            handTarget = rightHandIK.data.target;
         }
 
-        Transform weapon = weaponManager.activeWeaponSlot.transform.GetChild(0);
-        Transform newGrip = FindGripTransform(weapon);
-
-        if (newGrip != currentGrip)
+        if (handTarget == null)
         {
-            UpdateIKTarget(newGrip, weapon);
-            currentGrip = newGrip;
-        }
-        else if (currentGrip != null)
-        {
-            
-            
-            UpdateIKTarget(currentGrip, weapon);
+            GameObject targetObj = new GameObject(gameObject.name + "_RightHandTarget");
+            handTarget = targetObj.transform;
+            handTarget.SetParent(transform.parent != null ? transform.parent : transform, false);
         }
 
-        return currentGrip != null;
+        if (rightHandIK != null)
+        {
+            var data = rightHandIK.data;
+            data.target = handTarget;
+            rightHandIK.data = data;
+        }
     }
 
-    private void UpdateIKTarget(Transform grip, Transform weapon)
+    private void EnsureRightHandIK()
     {
-        if (grip == null || handTarget == null)
-            return;
+        if (rightHandIK == null)
+        {
+            rightHandIK = gameObject.AddComponent<TwoBoneIKConstraint>();
+        }
 
-        
-        Vector3 positionOffset = GetPositionOffset(weapon);
-        Vector3 rotationOffset = GetRotationOffset(weapon);
+        Transform armRoot = FindBoneByNames("mixamorig2:RightArm", "mixamorig:RightArm", "upper_arm.R");
+        Transform forearm = FindBoneByNames("mixamorig2:RightForeArm", "mixamorig:RightForeArm", "forearm.R");
+        Transform hand = FindBoneByNames("mixamorig2:RightHand", "mixamorig:RightHand", "hand.R");
 
-        
-        handTarget.position = grip.position + grip.TransformDirection(positionOffset);
+        if (armRoot == null || forearm == null || hand == null) return;
 
+        var data = rightHandIK.data;
+        data.root = armRoot;
+        data.mid = forearm;
+        data.tip = hand;
+        data.targetPositionWeight = 1f;
+        data.targetRotationWeight = 1f;
+        rightHandIK.data = data;
+    }
 
-        handTarget.rotation = grip.rotation * Quaternion.Euler(rotationOffset);
+    private void EnsureLeftHandIK()
+    {
+        if (!createLeftHandIK) return;
+
+        if (leftHandTarget == null)
+        {
+            GameObject targetObj = new GameObject(gameObject.name + "_LeftHandTarget");
+            leftHandTarget = targetObj.transform;
+            leftHandTarget.SetParent(transform.parent != null ? transform.parent : transform, false);
+        }
+
+        if (leftHandIK != null) return;
+
+        if (rigBuilder == null) return;
+
+        Transform armRoot = FindBoneByNames("mixamorig2:LeftArm", "mixamorig:LeftArm", "upper_arm.L");
+        Transform forearm = FindBoneByNames("mixamorig2:LeftForeArm", "mixamorig:LeftForeArm", "forearm.L");
+        Transform hand = FindBoneByNames("mixamorig2:LeftHand", "mixamorig:LeftHand", "hand.L");
+
+        if (armRoot == null || forearm == null || hand == null) return;
+
+        Transform rigParent = transform.parent != null ? transform.parent : transform;
+        GameObject leftRigObject = new GameObject("Arm_IK_Left");
+        leftRigObject.transform.SetParent(rigParent, false);
+
+        leftHandIK = leftRigObject.AddComponent<TwoBoneIKConstraint>();
+        var data = leftHandIK.data;
+        data.root = armRoot;
+        data.mid = forearm;
+        data.tip = hand;
+        data.target = leftHandTarget;
+        data.targetPositionWeight = 1f;
+        data.targetRotationWeight = 1f;
+        leftHandIK.data = data;
+
+        Rig rig = rigParent.GetComponent<Rig>();
+        if (rig == null)
+        {
+            rig = rigParent.gameObject.AddComponent<Rig>();
+        }
+
+        bool rigRegistered = false;
+        for (int i = 0; i < rigBuilder.layers.Count; i++)
+        {
+            if (rigBuilder.layers[i].rig == rig)
+            {
+                rigRegistered = true;
+                break;
+            }
+        }
+
+        if (!rigRegistered)
+        {
+            rigBuilder.layers.Add(new RigLayer(rig));
+        }
+
+        rigBuilder.Build();
+    }
+
+    private Transform FindBoneByNames(params string[] boneNames)
+    {
+        if (armsRoot == null) return null;
+
+        foreach (Transform child in armsRoot.GetComponentsInChildren<Transform>(true))
+        {
+            for (int i = 0; i < boneNames.Length; i++)
+            {
+                if (child.name == boneNames[i]) return child;
+            }
+        }
+
+        return null;
+    }
+
+    private void UpdateTarget(Transform target, Transform grip, Vector3 positionOffset, Vector3 rotationOffset)
+    {
+        if (grip == null || target == null) return;
+
+        Vector3 desiredPosition = grip.position + grip.TransformDirection(positionOffset);
+        Quaternion desiredRotation = grip.rotation * Quaternion.Euler(rotationOffset);
+
+        target.position = Vector3.Lerp(target.position, desiredPosition, Time.deltaTime * targetFollowSpeed);
+        target.rotation = Quaternion.Slerp(target.rotation, desiredRotation, Time.deltaTime * targetFollowSpeed);
     }
 
     private Vector3 GetPositionOffset(Transform weapon)
@@ -158,36 +278,18 @@ public class ArmsAnimation : MonoBehaviour
         return matchingOffset != null ? matchingOffset.rotationOffset : defaultRotationOffset;
     }
 
-    private Transform FindGripTransform(Transform weapon)
-    {
-        foreach (Transform child in weapon.GetComponentsInChildren<Transform>(true))
-        {
-            if (child.CompareTag("WeaponGrip"))
-            {
-                return child;
-            }
-        }
-
-        return null;
-    }
-
-    
-    
     public void CalibrateHandPosition()
     {
-        if (currentGrip == null || handTarget == null || twoBoneIK == null)
+        if (currentWeapon == null || handTarget == null || rightHandIK == null)
             return;
 
-        Transform handBone = twoBoneIK.data.tip;
+        WeaponActionAnimator actionAnimator = currentWeapon.GetComponent<WeaponActionAnimator>();
+        if (actionAnimator == null || actionAnimator.RightHandGrip == null) return;
+
+        Transform handBone = rightHandIK.data.tip;
         if (handBone == null)
             return;
 
-        
-        Weapon currentWeapon = weaponManager.activeWeaponSlot.GetComponentInChildren<Weapon>();
-        if (currentWeapon == null)
-            return;
-
-        
         WeaponOffsets matchingOffset = weaponOffsetsList.Find(wo => wo.weaponModel == currentWeapon.thisWeaponModel);
         if (matchingOffset == null)
         {
@@ -195,18 +297,15 @@ public class ArmsAnimation : MonoBehaviour
             weaponOffsetsList.Add(matchingOffset);
         }
 
-        
-        matchingOffset.positionOffset = currentGrip.InverseTransformPoint(handBone.position);
+        matchingOffset.positionOffset = actionAnimator.RightHandGrip.InverseTransformPoint(handBone.position);
 
-        
-        Quaternion relativeRotation = Quaternion.Inverse(currentGrip.rotation) * handBone.rotation;
+        Quaternion relativeRotation = Quaternion.Inverse(actionAnimator.RightHandGrip.rotation) * handBone.rotation;
         matchingOffset.rotationOffset = relativeRotation.eulerAngles;
 
         Debug.Log($"Calibrated hand position for {currentWeapon.thisWeaponModel}. " +
                   $"Position offset: {matchingOffset.positionOffset}, " +
                   $"Rotation offset: {matchingOffset.rotationOffset}");
 
-        
-        UpdateIKTarget(currentGrip, currentWeapon.transform);
+        UpdateTarget(handTarget, actionAnimator.RightHandGrip, matchingOffset.positionOffset, matchingOffset.rotationOffset);
     }
 }

@@ -37,10 +37,10 @@ Material:
     - _DuoWhite: 0.2
     - _Duotone: 0
     - _GrainFloor: 0.05
-    - _Intensity: 0
+    - _Intensity: 0.3
     - _LumaInfluence: 1
-    - _PixelSize: 1
-    - _Steps: 6
+    - _PixelSize: 2
+    - _Steps: 8
     m_Colors:
     - _BloodCenter: {r: 0.24906716, g: 0.68, b: 0, a: 0}
     - _BloodColor: {r: 0.45, g: 0.059999965, b: 0.06999998, a: 1}

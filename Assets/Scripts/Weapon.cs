@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
+    public event Action<Weapon> Fired;
+    public event Action<Weapon, bool> AdsChanged;
+    public event Action<Weapon> ReloadStarted;
+    public event Action<Weapon> ReloadCompleted;
+
     public int weaponDamage;
     public bool isActiveWeapon;
     public bool isShooting, readyToShoot;
@@ -40,6 +45,7 @@ public class Weapon : MonoBehaviour
     Vector3 muzzleEffectLocalPosition;
     Quaternion muzzleEffectLocalRotation;
     bool hasMuzzleEffectTransform;
+    bool playedEmptyMagClick;
 
     public enum WeaponModel
     {
@@ -59,6 +65,7 @@ public class Weapon : MonoBehaviour
     }
 
     public ShootingMode currentshootingMode;
+    public bool IsADS => isADS;
 
     private void Awake()
     {
@@ -79,6 +86,7 @@ public class Weapon : MonoBehaviour
             muzzleEffectLocalRotation = muzzleEffect.transform.localRotation;
             hasMuzzleEffectTransform = true;
         }
+
     }
 
     void Update()
@@ -95,10 +103,6 @@ public class Weapon : MonoBehaviour
                 ExitADS();
             }
 
-            if (bulletsLeft == 0 && isShooting)
-            {
-                SoundManager.Instance.emptymag.Play();
-            }
             if (currentshootingMode == ShootingMode.Auto)
             {
                 isShooting = Input.GetKey(KeyCode.Mouse0);
@@ -108,11 +112,24 @@ public class Weapon : MonoBehaviour
                 isShooting = Input.GetKeyDown(KeyCode.Mouse0);
             }
 
+            if (bulletsLeft == 0 && isShooting)
+            {
+                if (!playedEmptyMagClick && SoundManager.Instance != null && SoundManager.Instance.emptymag != null)
+                {
+                    SoundManager.Instance.emptymag.Play();
+                }
+                playedEmptyMagClick = true;
+            }
+            else if (!isShooting)
+            {
+                playedEmptyMagClick = false;
+            }
+
             if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !isReloading && WeaponManager.Instance.CheckAmmoLeftFor(thisWeaponModel) > 0)
             {
                 Reload();
             }
-            if (readyToShoot && isShooting && bulletsLeft > 0)
+            if (readyToShoot && isShooting && bulletsLeft > 0 && !isReloading)
             {
                 currentBurst = bulletsPerBurst;
                 FireWeapon();
@@ -122,7 +139,7 @@ public class Weapon : MonoBehaviour
 
     public void SetRenderLayer(bool weaponRender)
     {
-        int layer = LayerMask.NameToLayer(weaponRender ? "WeaponRender" : "Default");
+        int layer = LayerMask.NameToLayer("Default");
         SetLayerRecursive(transform, layer);
 
         if (TryGetComponent(out Collider pickupCollider))
@@ -142,6 +159,7 @@ public class Weapon : MonoBehaviour
 
     private static void SetLayerRecursive(Transform root, int layer)
     {
+        root.gameObject.layer = layer;
         foreach (Transform child in root)
         {
             child.gameObject.layer = layer;
@@ -151,18 +169,20 @@ public class Weapon : MonoBehaviour
 
     private void EnterADS()
     {
-        animator.SetTrigger("enterADS");
+        if (animator != null) animator.SetTrigger("enterADS");
         isADS = true;
-        HUDManager.Instance.middleDot.SetActive(false);
+        if (HUDManager.Instance != null && HUDManager.Instance.middleDot != null) HUDManager.Instance.middleDot.SetActive(false);
         spreadIntensity = ADSSpreadIntensity;
+        AdsChanged?.Invoke(this, true);
     }
 
     private void ExitADS()
     {
-        animator.SetTrigger("exitADS");
+        if (animator != null) animator.SetTrigger("exitADS");
         isADS = false;
-        HUDManager.Instance.middleDot.SetActive(true);
+        if (HUDManager.Instance != null && HUDManager.Instance.middleDot != null) HUDManager.Instance.middleDot.SetActive(true);
         spreadIntensity = hipSpreadIntensity;
+        AdsChanged?.Invoke(this, false);
     }
 
     private void FireWeapon()
@@ -191,18 +211,18 @@ public class Weapon : MonoBehaviour
         }
         if (isADS)
         {
-            animator.SetTrigger("ADS_RECOIL");
+            if (animator != null) animator.SetTrigger("ADS_RECOIL");
             isADS = true;
 
         }
         else
         {
-            animator.SetTrigger("RECOIL");
+            if (animator != null) animator.SetTrigger("RECOIL");
             isADS = false;
         }
 
 
-        SoundManager.Instance.PlayShootingSound(thisWeaponModel);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayShootingSound(thisWeaponModel);
 
         readyToShoot = false;
 
@@ -230,6 +250,8 @@ public class Weapon : MonoBehaviour
             new Vector3(0f, 0f, -0.02f * config.recoilPitchMax * recoilScale),
             new Vector3(-0.6f * config.recoilPitchMax * recoilScale, 0f, 0f),
             config.recoilRecoverSpeed);
+
+        Fired?.Invoke(this);
 
         if (allowReset)
         {
@@ -408,9 +430,10 @@ public class Weapon : MonoBehaviour
 
     private void Reload()
     {
-        animator.SetTrigger("RELOAD");
-        SoundManager.Instance.PlayReloadSound(thisWeaponModel);
+        if (animator != null) animator.SetTrigger("RELOAD");
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayReloadSound(thisWeaponModel);
         isReloading = true;
+        ReloadStarted?.Invoke(this);
         Invoke("ReloadFinished", reloadTime);
     }
 
@@ -425,6 +448,7 @@ public class Weapon : MonoBehaviour
         WeaponManager.Instance.DecreaseTotalAmmo(bulletsToReload, thisWeaponModel);
 
         isReloading = false;
+        ReloadCompleted?.Invoke(this);
     }
 
     private void ResetShot()
